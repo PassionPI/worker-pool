@@ -1,0 +1,57 @@
+{
+  "name": "worker-pool",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "npm run build:check && npm run build:bundle && npm run build:type",
+    "build:bundle": "vite build",
+    "build:check": "npm run test:cov && npm run check",
+    "build:type": "rm -rf ./types && tsc -p ./types.json && rollup -c rollup.config.mjs",
+    "debug:file": "tsx",
+    "test:dev": "vitest",
+    "test:run": "vitest run",
+    "test:cov": "vitest run --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PassionPI/worker-pool.git"
+  },
+  "author": "PassionPI <472121553@qq.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PassionPI/worker-pool/issues"
+  },
+  "homepage": "https://github.com/PassionPI/worker-pool#readme",
+  "devDependencies": {
+    "@vitest/coverage-c8": "^0.29.2",
+    "rambda": "^7.1.4",
+    "rollup": "^3.20",
+    "rollup-plugin-dts": "^5.3",
+    "tsx": "^3.8.2",
+    "typescript": "^5",
+    "vite": "^4",
+    "vitest": "^0.29.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "main": "./dist/bundle.cjs.js",
+  "module": "./dist/bundle.es.js",
+  "types": "./dist/bundle.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/bundle.es.js",
+      "require": "./dist/bundle.cjs.js",
+      "default": "./dist/bundle.es.js",
+      "types": "./dist/bundle.d.ts"
+    }
+  },
+  "keywords": [
+    "async",
+    "fp",
+    "worker pool"
+  ]
+}
