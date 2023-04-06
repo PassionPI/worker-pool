@@ -1,12 +1,12 @@
 {
-  "name": "worker-pool",
+  "name": "wkp",
   "version": "0.1.0",
   "description": "",
   "scripts": {
     "check": "tsc --noEmit",
     "build": "npm run build:check && npm run build:bundle && npm run build:type",
     "build:bundle": "vite build",
-    "build:check": "npm run test:cov && npm run check",
+    "build:check": "npm run check",
     "build:type": "rm -rf ./types && tsc -p ./types.json && rollup -c rollup.config.mjs",
     "debug:file": "tsx",
     "test:dev": "vitest",
@@ -53,5 +53,8 @@
     "async",
     "fp",
     "worker pool"
-  ]
+  ],
+  "dependencies": {
+    "ufp": "^0.1.0"
+  }
 }

@@ -1,5 +1,10 @@
 lockfileVersion: '6.0'
 
+dependencies:
+  ufp:
+    specifier: ^0.1.0
+    version: registry.npmjs.org/ufp@0.1.0
+
 devDependencies:
   '@vitest/coverage-c8':
     specifier: ^0.29.2
@@ -1520,3 +1525,9 @@ packages:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
     dev: true
+
+  registry.npmjs.org/ufp@0.1.0:
+    resolution: {integrity: sha512-SjXjnivUSYekwhTwrpj8cMa+L8IdVuQzVbwT18+SHkQS8lwVouU4Quhfd5td5gijvjX/kw/mMip58GhSjFBu9g==, registry: https://registry.npmmirror.com/, tarball: https://registry.npmjs.org/ufp/-/ufp-0.1.0.tgz}
+    name: ufp
+    version: 0.1.0
+    dev: false
