@@ -142,10 +142,10 @@ class O {
 }
 I = new WeakMap(), g = new WeakMap(), p = new WeakMap(), m = new WeakMap(), d = new WeakMap();
 const L = () => typeof Deno < "u" && Deno.version != null, P = () => typeof process < "u" && process.versions != null, z = () => typeof window < "u" && window.document != null, X = () => {
-  if (P())
-    return require("os").cpus().length;
   if (L() || z())
     return navigator.hardwareConcurrency;
+  if (P())
+    return require("os").cpus().length;
   throw new Error("Un Support Environment");
 }, Y = () => {
   if (L() || z()) {

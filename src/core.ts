@@ -147,12 +147,12 @@ const is_browser = () => {
   return typeof window !== "undefined" && window.document != null;
 };
 const get_cpu_count = () => {
+  if (is_deno() || is_browser()) {
+    return navigator.hardwareConcurrency;
+  }
   if (is_node()) {
     //@ts-ignore 环境判断函数
     return require("os").cpus().length;
-  }
-  if (is_deno() || is_browser()) {
-    return navigator.hardwareConcurrency;
   }
   throw new Error("Un Support Environment");
 };
