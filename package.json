@@ -1,7 +1,8 @@
 {
   "name": "wkp",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "",
+  "type": "module",
   "scripts": {
     "check": "tsc --noEmit",
     "build": "npm run build:check && npm run build:bundle && npm run build:type",
