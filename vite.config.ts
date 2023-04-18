@@ -12,7 +12,8 @@ export default mergeConfig(
       lib: {
         entry: "src/index.ts",
         formats: ["cjs", "es"],
-        fileName: (format) => `bundle.${format}.js`,
+        fileName: (format) =>
+          format === "cjs" ? `bundle.${format}` : `bundle.${format}.js`,
       },
     },
   }),

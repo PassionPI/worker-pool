@@ -1,6 +1,6 @@
 {
   "name": "wkp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "",
   "type": "module",
   "scripts": {
@@ -39,13 +39,13 @@
     "README.md",
     "CHANGELOG.md"
   ],
-  "main": "./dist/bundle.cjs.js",
+  "main": "./dist/bundle.es.js",
   "module": "./dist/bundle.es.js",
   "types": "./dist/bundle.d.ts",
   "exports": {
     ".": {
       "import": "./dist/bundle.es.js",
-      "require": "./dist/bundle.cjs.js",
+      "require": "./dist/bundle.cjs",
       "default": "./dist/bundle.es.js",
       "types": "./dist/bundle.d.ts"
     }
@@ -56,6 +56,6 @@
     "worker pool"
   ],
   "dependencies": {
-    "ufp": "^0.1.0"
+    "ufp": "^0.1.4"
   }
 }

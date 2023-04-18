@@ -1,5 +1,5 @@
 import _worker_url_web from "@/static/_worker_web.js?url";
-import { lock, pended } from "ufp";
+import { defer, lock } from "ufp";
 
 /**
  * @description 链表节点
@@ -193,7 +193,7 @@ const create_worker = (): Worker => {
 const worker_handler = () => {
   const worker = create_worker();
 
-  const ref = { defer: pended<any>() };
+  const ref = { defer: defer<any>() };
 
   worker.addEventListener("message", (e) => {
     const [err, result] = e.data || [];
@@ -202,7 +202,7 @@ const worker_handler = () => {
     } else {
       ref.defer.resolve(result);
     }
-    ref.defer = pended();
+    ref.defer = defer();
   });
 
   const run = async <P extends unknown[], R extends unknown>(
@@ -215,7 +215,11 @@ const worker_handler = () => {
         arg,
       },
     });
-    return await ref.defer.pending;
+    const [err, result] = await ref.defer.pending;
+    if (err) {
+      throw err;
+    }
+    return result;
   };
 
   return { worker, run: lock(run) };
