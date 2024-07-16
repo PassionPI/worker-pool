@@ -1,187 +1,6 @@
-import _worker_url_web from "@/static/_worker_web.js?url";
-import { defer, lock } from "ufp";
+import { concurrent, defer } from "@passion_pi/fp";
+import { create_worker, get_cpu_count } from "./effect";
 
-/**
- * @description 链表节点
- */
-class LinkNode<T> {
-  value: T;
-  next: null | LinkNode<T> = null;
-
-  constructor(value: T) {
-    this.value = value;
-  }
-}
-/**
- * @description 链表
- */
-class LinkList<T> {
-  #head: null | LinkNode<T> = null;
-  #last: null | LinkNode<T> = null;
-  #size = 0;
-
-  size() {
-    return this.#size;
-  }
-
-  clear() {
-    this.#head = null;
-    this.#last = null;
-    this.#size = 0;
-  }
-
-  shift(): undefined | T {
-    const head = this.#head;
-    if (this.#size) {
-      this.#head = head!.next;
-      this.#size--;
-    }
-    if (!this.#size) {
-      this.#head = null;
-      this.#last = null;
-    }
-    return head?.value;
-  }
-
-  unshift(value: T): void {
-    const head = new LinkNode(value);
-    if (this.#size) {
-      head.next = this.#head;
-      this.#head = head;
-    } else {
-      this.#head! = head;
-      this.#last! = head;
-    }
-    this.#size++;
-  }
-
-  push(value: T): void {
-    const last = new LinkNode(value);
-    if (this.#size) {
-      this.#last!.next = last;
-      this.#last! = last;
-    } else {
-      this.#head! = last;
-      this.#last! = last;
-    }
-    this.#size++;
-  }
-}
-
-/**
- *
- * @description 并发控制函数
- *
- * 1、是否有空闲
- * 2、数量池
- * 3、排队等待
- */
-type Task<T> = () => Promise<T>;
-
-type TaskItem<T> = {
-  task: Task<T>;
-  resolve: (value: T) => void;
-  reject: (reason?: unknown) => void;
-};
-
-class ConcurrentControl {
-  #max_concurrency: number;
-  #current_count = 0;
-  #queue = new LinkList<TaskItem<any>>();
-
-  constructor(config: { max_concurrency: number }) {
-    const { max_concurrency } = config || {};
-    this.#max_concurrency = max_concurrency;
-  }
-
-  add_task = <T>(task: Task<T>): Promise<T> => {
-    return new Promise((resolve, reject) => {
-      this.#queue.push({
-        task,
-        resolve,
-        reject,
-      });
-      this.#next();
-    });
-  };
-
-  busy = (): boolean => {
-    return this.#current_count === this.#max_concurrency;
-  };
-
-  clear = () => {
-    this.#queue.clear();
-  };
-
-  #check = (): boolean => {
-    return !this.busy() && this.#queue.size() > 0;
-  };
-
-  #next = (): void => {
-    while (this.#check()) {
-      const { task, reject, resolve } = this.#queue.shift()!;
-      this.#current_count++;
-      Promise.resolve()
-        .then(task)
-        .then(resolve)
-        .catch(reject)
-        .finally(() => {
-          this.#current_count--;
-          this.#next();
-        });
-    }
-  };
-}
-
-//* 判断不同环境的函数
-const is_deno = () => {
-  //@ts-ignore
-  return typeof Deno !== "undefined" && Deno.version != null;
-};
-const is_node = () => {
-  //@ts-ignore 环境判断函数
-  return typeof process !== "undefined" && process.versions != null;
-};
-const is_browser = () => {
-  //@ts-ignore 环境判断函数
-  return typeof window !== "undefined" && window.document != null;
-};
-const get_cpu_count = () => {
-  if (is_deno() || is_browser()) {
-    return navigator.hardwareConcurrency;
-  }
-  if (is_node()) {
-    //@ts-ignore 环境判断函数
-    return require("os").cpus().length;
-  }
-  throw new Error("Un Support Environment");
-};
-/**
- *
- * @description 创建 worker
- * 创建:  根据环境创建对应实例
- *    browser - worker -> module
- *    deno    - worker -> module
- *    node    - worker_thread
- */
-const create_worker = (): Worker => {
-  if (is_deno() || is_browser()) {
-    const url = new URL(_worker_url_web, import.meta.url);
-    return new Worker(url, { type: "module" });
-  }
-  if (is_node()) {
-    //@ts-ignore 环境判断函数
-    const worker = new (require("worker_threads").Worker)(
-      //@ts-ignore 环境判断函数
-      require("path").resolve(__dirname, "./_worker_node.js")
-    );
-    worker.addEventListener = (e: string, fn: Function) => {
-      worker.on(e, fn);
-    };
-    return worker;
-  }
-  throw new Error("Un Support Environment");
-};
 /**
  *
  * @description 封装 worker
@@ -194,7 +13,7 @@ const worker_handler = () => {
   const worker = create_worker();
 
   const ref = { defer: defer<any>() };
-
+  let x = Promise.withResolvers();
   worker.addEventListener("message", (e) => {
     const [err, result] = e.data || [];
     if (err != null) {
@@ -202,6 +21,11 @@ const worker_handler = () => {
     } else {
       ref.defer.resolve(result);
     }
+    ref.defer = defer();
+  });
+
+  worker.addEventListener("error", (e) => {
+    ref.defer.reject(e.error);
     ref.defer = defer();
   });
 
@@ -215,52 +39,64 @@ const worker_handler = () => {
         arg,
       },
     });
-    const [err, result] = await ref.defer.pending;
-    if (err) {
-      throw err;
-    }
-    return result;
+    return ref.defer.pending.unwrap();
   };
 
-  return { worker, run: lock(run) };
+  return { worker, run };
 };
 
-export function worker_pool(config?: { max?: number }) {
-  const { max = get_cpu_count() - 1 } = config || {};
-  //* 并发控制器
-  const concurrent = new ConcurrentControl({ max_concurrency: max });
-  //* 存放worker实例
-  const pool = new Map<number, ReturnType<typeof worker_handler>>();
+export function worker_pool({ max = get_cpu_count() }: { max?: number } = {}) {
+  const control = concurrent({ max_concurrency: max });
   //* 当前闲置可用的worker的key
   const rest: Array<number> = [];
-
-  const create = () => {
-    //* worker数量未达上限
-    while (pool.size < max) {
-      const { size } = pool;
-      //* 创建一个worker实例, 并放入休息区
-      pool.set(size, worker_handler());
-      rest.push(size);
-    }
-  };
+  const pool = new Map<number, ReturnType<typeof worker_handler>>();
+  //* worker的id
+  let inc = 0;
 
   const exec = <P extends unknown[], R extends unknown>(
     fn: (...arg: P) => R,
-    arg: P
+    arg: P,
+    config?: Parameters<typeof control.add<any, number>>[1]
   ) => {
-    create();
-    //* 并发任务队列添加任务
-    return concurrent.add_task(async () => {
-      //* 取出第一个休息区的key
-      const key = rest.pop()!;
-      //* 运行worker, 执行函数
-      const result = await pool.get(key)!.run(fn, arg);
-      //* 执行完毕, 在休息区存放key
-      rest.push(key);
+    let id: undefined | number;
 
-      return result;
-    });
+    const task = control.add(async () => {
+      //* worker数量未达上限
+      if (pool.size < max) {
+        inc++;
+        rest.push(inc);
+        pool.set(inc, worker_handler());
+      }
+      id = rest.pop();
+      if (id != null) {
+        const { run } = pool.get(id) || {};
+        if (run) {
+          const x = await run(fn, arg);
+          rest.push(id);
+          return x;
+        } else {
+          throw Error("Worker Not Found!");
+        }
+      } else {
+        throw Error("Worker ID Not Found!");
+      }
+    }, config);
+    return {
+      ...task,
+      reject(msg: string) {
+        task.reject(Error("Task handle Rejected!"));
+        if (id != null) {
+          const handler = pool.get(id);
+          if (handler) {
+            handler.worker.terminate();
+            handler.worker.dispatchEvent(new Event("error"));
+            pool.delete(id);
+          }
+        }
+      },
+    };
   };
+
   //* 关闭所有worker
   const terminate = () => {
     for (const { worker } of pool.values()) {
@@ -268,7 +104,7 @@ export function worker_pool(config?: { max?: number }) {
     }
     pool.clear();
     rest.length = 0;
-    concurrent.clear();
+    control.clear();
   };
 
   return {

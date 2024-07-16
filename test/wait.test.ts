@@ -1,6 +1,5 @@
-import { worker_pool } from "./core";
-
-export * from "./core";
+import { worker_pool } from "@/index";
+import { expect, test } from "vitest";
 
 const promise_cost = async (tag: string, promise: Promise<unknown>) => {
   const start = Date.now();
@@ -23,7 +22,7 @@ const x = worker_fib(fib_num);
 const end = Date.now();
 const cost = end - start;
 console.log("One worker cost", cost);
-const xxx = async () => {
+test("wait time cost", async () => {
   const seq: number[] = [];
   const p = worker_pool({ max: 2 });
   const x1 = p
@@ -41,11 +40,11 @@ const xxx = async () => {
       seq.push(2);
       return v;
     })
-    .catch((e) => {
-      console.log("test x2 catch", e, Date.now() - x2Start);
+    .catch(() => {
+      console.log("test x2 catch", Date.now() - x2Start);
     });
   setTimeout(() => {
-    x2.reject("x2 reject");
+    x2.reject();
   }, wait_time);
   const x3Start = Date.now();
   const x3 = p.exec(worker_fib, [fib_num]);
@@ -55,10 +54,10 @@ const xxx = async () => {
       seq.push(3);
       return v;
     })
-    .catch((e) => {
-      console.log("test x3 catch", e, Date.now() - x3Start);
+    .catch(() => {
+      console.log("test x3 catch", Date.now() - x3Start);
     });
-  x3.reject("x3 reject");
+  x3.reject();
   const x4 = p
     .exec(worker_fib, [fib_num], { priority: 15 })
     .pending.unwrap()
@@ -80,14 +79,6 @@ const xxx = async () => {
       seq.push(6);
       return v;
     });
-  const x7 = p
-    .exec(worker_fib, [fib_num], { priority: 20 })
-    .pending.unwrap()
-    .then((v) => {
-      seq.push(7);
-      return v;
-    });
-
   const start = Date.now();
   promise_cost("x1", x1);
   promise_cost(
@@ -101,7 +92,6 @@ const xxx = async () => {
   promise_cost("x4", x4);
   promise_cost("x5", x5);
   promise_cost("x6", x6);
-  promise_cost("x7", x7);
   await Promise.allSettled([
     x1,
     x2.pending.unwrap(),
@@ -109,13 +99,13 @@ const xxx = async () => {
     x4,
     x5,
     x6,
-    x7,
   ]);
   const end = Date.now();
-
-  console.log(cost * 3 < end - start);
-  console.log(cost * 3.5 + wait_time > end - start);
-  console.log((await x6) === x);
-  console.log(seq, [1, 6, 4, 5]);
-};
-xxx();
+  expect(cost * 5).lte(end - start);
+  expect(cost * 5.5 + wait_time).gte(end - start);
+  expect(await x1).eq(x);
+  expect(await x4).eq(x);
+  expect(await x5).eq(x);
+  expect(await x6).eq(x);
+  expect(seq).toEqual([1, 6, 4, 5]);
+});

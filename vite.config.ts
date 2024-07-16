@@ -10,8 +10,9 @@ export default mergeConfig(
     },
     build: {
       lib: {
+        name: "work_pool",
         entry: "src/index.ts",
-        formats: ["cjs", "es"],
+        formats: ["cjs", "es", "iife"],
         fileName: (format) =>
           format === "cjs" ? `bundle.${format}` : `bundle.${format}.js`,
       },

@@ -1,10 +1,10 @@
 {
-  "name": "wkp",
+  "name": "@passion_pi/worker-pool",
   "version": "0.1.5",
   "description": "",
   "type": "module",
   "scripts": {
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit --skipLibCheck",
     "build": "npm run build:check && npm run build:bundle && npm run build:type",
     "build:bundle": "vite build",
     "build:check": "npm run check",
@@ -18,21 +18,22 @@
     "type": "git",
     "url": "git+https://github.com/PassionPI/worker-pool.git"
   },
-  "author": "PassionPI <472121553@qq.com>",
+  "author": "PassionPI <ipjig@qq.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/PassionPI/worker-pool/issues"
   },
   "homepage": "https://github.com/PassionPI/worker-pool#readme",
   "devDependencies": {
-    "@vitest/coverage-c8": "^0.29.2",
-    "rambda": "^7.1.4",
-    "rollup": "^3.20",
-    "rollup-plugin-dts": "^5.3",
-    "tsx": "^3.8.2",
-    "typescript": "^5",
-    "vite": "^4",
-    "vitest": "^0.29.0"
+    "@types/node": "^20.14.10",
+    "@vitest/coverage-v8": "^2.0.1",
+    "rambda": "^9",
+    "rollup": "^4",
+    "rollup-plugin-dts": "^6",
+    "tsx": "^4",
+    "typescript": "^5.5",
+    "vite": "^5",
+    "vitest": "^2"
   },
   "files": [
     "dist",
@@ -56,6 +57,9 @@
     "worker pool"
   ],
   "dependencies": {
-    "ufp": "^0.1.4"
+    "@passion_pi/fp": "^0.1.18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
