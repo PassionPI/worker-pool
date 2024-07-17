@@ -1,32 +1,28 @@
 import { concurrent, defer } from "@passion_pi/fp";
 import { create_worker, get_cpu_count } from "./effect";
+import { WorkerOption } from "./types";
 
-/**
- *
- * @description 封装 worker
- * 封装:  封装成单个Promise函数
- *  1、 错误处理
- *  2、 terminal
- *  3、 currency
- */
-const worker_handler = () => {
-  const worker = create_worker();
+type ID = number;
 
-  const ref = { defer: defer<any>() };
-  let x = Promise.withResolvers();
+const worker_handler = (config?: WorkerOption) => {
+  let x = defer<any>();
+
+  const refresh = () => (x = defer());
+  const worker = create_worker(config);
+
   worker.addEventListener("message", (e) => {
     const [err, result] = e.data || [];
     if (err != null) {
-      ref.defer.reject(err.msg);
+      x.reject(err);
     } else {
-      ref.defer.resolve(result);
+      x.resolve(result);
     }
-    ref.defer = defer();
+    refresh();
   });
 
   worker.addEventListener("error", (e) => {
-    ref.defer.reject(e.error);
-    ref.defer = defer();
+    x.reject(e.error);
+    refresh();
   });
 
   const run = async <P extends unknown[], R extends unknown>(
@@ -39,41 +35,49 @@ const worker_handler = () => {
         arg,
       },
     });
-    return ref.defer.pending.unwrap();
+    return x.pending;
   };
 
   return { worker, run };
 };
 
-export function worker_pool({ max = get_cpu_count() }: { max?: number } = {}) {
+export function worker_pool({
+  max = get_cpu_count(),
+  workerOption,
+}: { max?: number; workerOption?: WorkerOption } = {}) {
   const control = concurrent({ max_concurrency: max });
-  //* 当前闲置可用的worker的key
-  const rest: Array<number> = [];
-  const pool = new Map<number, ReturnType<typeof worker_handler>>();
-  //* worker的id
-  let inc = 0;
+  const pool = new Map<ID, ReturnType<typeof worker_handler>>();
+  const idle = Array<ID>();
 
-  const exec = <P extends unknown[], R extends unknown>(
+  let inc: ID = 0;
+
+  const exec = <
+    P extends unknown[],
+    R extends unknown,
+    N extends number = number
+  >(
     fn: (...arg: P) => R,
     arg: P,
-    config?: Parameters<typeof control.add<any, number>>[1]
+    config?: Parameters<typeof control.add<R, N>>[1]
   ) => {
-    let id: undefined | number;
+    let id: undefined | ID;
 
     const task = control.add(async () => {
       //* worker数量未达上限
       if (pool.size < max) {
         inc++;
-        rest.push(inc);
-        pool.set(inc, worker_handler());
+        idle.push(inc);
+        pool.set(inc, worker_handler(workerOption));
       }
-      id = rest.pop();
+      id = idle.pop();
       if (id != null) {
         const { run } = pool.get(id) || {};
         if (run) {
-          const x = await run(fn, arg);
-          rest.push(id);
-          return x;
+          try {
+            return await run(fn, arg);
+          } finally {
+            idle.push(id);
+          }
         } else {
           throw Error("Worker Not Found!");
         }
@@ -83,8 +87,8 @@ export function worker_pool({ max = get_cpu_count() }: { max?: number } = {}) {
     }, config);
     return {
       ...task,
-      reject(msg: string) {
-        task.reject(Error("Task handle Rejected!"));
+      reject(msg: string = "") {
+        task.reject(Error("Task handle Rejected!" + msg));
         if (id != null) {
           const handler = pool.get(id);
           if (handler) {
@@ -99,11 +103,9 @@ export function worker_pool({ max = get_cpu_count() }: { max?: number } = {}) {
 
   //* 关闭所有worker
   const terminate = () => {
-    for (const { worker } of pool.values()) {
-      worker.terminate();
-    }
+    idle.length = 0;
+    pool.forEach(({ worker }) => worker.terminate());
     pool.clear();
-    rest.length = 0;
     control.clear();
   };
 

@@ -1,16 +1,16 @@
 self.onmessage = (e) => {
-  const { payload } = e.data || {};
-  const { fn, arg } = payload || {};
-  const msg = (m) => m || "No Err Msg!";
-  const err = (e) => ({
-    msg: e instanceof Error ? msg(e.message) : JSON.stringify(msg(e)),
-  });
+  let { payload: p } = e.data || {};
+  let { fn, arg } = p || {};
+  let msg = (m) => m || "No Err Msg!";
   Promise.resolve(`return (${fn})(...arguments)`)
     .then(Function)
     .then((fn) => fn(...arg))
     .then(
       (r) => [null, r],
-      (e) => [err(e), null]
+      (e) => [
+        e instanceof Error ? msg(e.message) : JSON.stringify(msg(e)),
+        null,
+      ]
     )
     .then(self.postMessage);
 };

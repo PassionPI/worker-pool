@@ -24,17 +24,17 @@ console.log("One worker cost", cost);
 test("run time cost", async () => {
   const p = worker_pool({ max: 2 });
 
-  const x1 = p.exec(worker_fib, [fib_num]).pending.unwrap();
+  const x1 = p.exec(worker_fib, [fib_num]).pending;
 
-  const x2 = p.exec(worker_fib, [fib_num]).pending.unwrap();
+  const x2 = p.exec(worker_fib, [fib_num]).pending;
 
-  const x3 = p.exec(worker_fib, [fib_num]).pending.unwrap();
+  const x3 = p.exec(worker_fib, [fib_num]).pending;
 
-  const x4 = p.exec(worker_fib, [fib_num], { priority: 15 }).pending.unwrap();
+  const x4 = p.exec(worker_fib, [fib_num], { priority: 15 }).pending;
 
-  const x5 = p.exec(worker_fib, [fib_num], { priority: 5 }).pending.unwrap();
+  const x5 = p.exec(worker_fib, [fib_num], { priority: 5 }).pending;
 
-  const x6 = p.exec(worker_fib, [fib_num], { priority: 20 }).pending.unwrap();
+  const x6 = p.exec(worker_fib, [fib_num], { priority: 20 }).pending;
 
   promise_cost("x1", x1);
   promise_cost("x2", x2);

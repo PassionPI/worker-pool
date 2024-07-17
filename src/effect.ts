@@ -1,5 +1,8 @@
-import worker_url_node from "@/static/worker_node.js?raw";
+// import worker_url_node from "@/static/worker_node.js?raw";
 import worker_url_web from "@/static/worker_web.js?url";
+import { WorkerOption } from "./types";
+
+const UNSUPPORTED_ENV = "Un Support Environment";
 
 //* 判断不同环境的函数
 export const is_deno = () => {
@@ -18,10 +21,10 @@ export const get_cpu_count = () => {
   if (is_deno() || is_browser()) {
     return navigator.hardwareConcurrency;
   }
-  if (is_node()) {
-    return require("os").cpus().length;
-  }
-  throw new Error("Un Support Environment");
+  // if (is_node()) {
+  //   return require("os").cpus().length;
+  // }
+  throw Error(UNSUPPORTED_ENV);
 };
 /**
  *
@@ -31,25 +34,24 @@ export const get_cpu_count = () => {
  *    deno    - worker -> module
  *    node    - worker_thread
  */
-export const create_worker = (): Worker => {
+export const create_worker = (config?: WorkerOption): Worker => {
   if (is_deno() || is_browser()) {
-    const url = new URL(worker_url_web, import.meta.url);
-    return new Worker(url, { type: "module" });
+    return new Worker(new URL(worker_url_web), config);
   }
-  if (is_node()) {
-    const worker = new (require("worker_threads").Worker)(worker_url_node, {
-      eval: true,
-    });
+  // if (is_node()) {
+  //   const worker = new (require("worker_threads").Worker)(worker_url_node, {
+  //     eval: true,
+  //   });
 
-    return {
-      postMessage: worker.postMessage.bind(worker),
-      addEventListener(e: string, fn: (...args: unknown[]) => void) {
-        worker.on(e, fn);
-      },
-      terminate() {
-        worker.terminate();
-      },
-    } as Worker;
-  }
-  throw new Error("Un Support Environment");
+  //   return {
+  //     postMessage: worker.postMessage.bind(worker),
+  //     addEventListener(e: string, fn: (...args: unknown[]) => void) {
+  //       worker.on(e, fn);
+  //     },
+  //     terminate() {
+  //       worker.terminate();
+  //     },
+  //   } as Worker;
+  // }
+  throw Error(UNSUPPORTED_ENV);
 };

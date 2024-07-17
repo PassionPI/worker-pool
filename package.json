@@ -1,6 +1,6 @@
 {
   "name": "@passion_pi/worker-pool",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "",
   "type": "module",
   "scripts": {
@@ -57,7 +57,7 @@
     "worker pool"
   ],
   "dependencies": {
-    "@passion_pi/fp": "^0.1.18"
+    "@passion_pi/fp": "^0.2.0"
   },
   "publishConfig": {
     "access": "public"

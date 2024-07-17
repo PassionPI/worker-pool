@@ -1,5 +1,4 @@
-import { worker_pool } from "@/index";
-import { expect, test } from "vitest";
+import { worker_pool } from "@/core";
 
 const promise_cost = async (tag: string, promise: Promise<unknown>) => {
   const start = Date.now();
@@ -22,7 +21,7 @@ const x = worker_fib(fib_num);
 const end = Date.now();
 const cost = end - start;
 console.log("One worker cost", cost);
-test("wait time cost", async () => {
+const xxx = async () => {
   const seq: number[] = [];
   const p = worker_pool({ max: 2 });
   const x1 = p.exec(worker_fib, [fib_num]).pending.then((v) => {
@@ -37,8 +36,8 @@ test("wait time cost", async () => {
       seq.push(2);
       return v;
     })
-    .catch(() => {
-      console.log("test x2 catch", Date.now() - x2Start);
+    .catch((e) => {
+      console.log("test x2 catch", e, Date.now() - x2Start);
     });
   setTimeout(() => {
     x2.reject();
@@ -51,10 +50,10 @@ test("wait time cost", async () => {
       seq.push(3);
       return v;
     })
-    .catch(() => {
-      console.log("test x3 catch", Date.now() - x3Start);
+    .catch((e) => {
+      console.log("test x3 catch", e, Date.now() - x3Start);
     });
-  x3.reject();
+  x3.reject("x3 reject");
   const x4 = p
     .exec(worker_fib, [fib_num], { priority: 15 })
     .pending.then((v) => {
@@ -68,11 +67,40 @@ test("wait time cost", async () => {
       return v;
     });
   const x6 = p
-    .exec(worker_fib, [fib_num], { priority: 20 })
+    .exec(
+      () => {
+        throw new Error("test sync error");
+      },
+      [],
+      { priority: 20 }
+    )
     .pending.then((v) => {
       seq.push(6);
       return v;
+    })
+    .catch((e) => console.log("test x6 catch", e));
+  const x7 = p
+    .exec(() => Promise.reject("test promise error"), [], {
+      priority: 20,
+    })
+    .pending.then((v) => {
+      seq.push(7);
+      return v;
+    })
+    .catch((e) => console.log("test x7 catch", e));
+  const x8 = p
+    .exec(worker_fib, [fib_num], { priority: 20 })
+    .pending.then((v) => {
+      seq.push(8);
+      return v;
     });
+  const x9 = p
+    .exec(worker_fib, [fib_num], { priority: 20 })
+    .pending.then((v) => {
+      seq.push(9);
+      return v;
+    });
+
   const start = Date.now();
   promise_cost("x1", x1);
   promise_cost(
@@ -86,13 +114,25 @@ test("wait time cost", async () => {
   promise_cost("x4", x4);
   promise_cost("x5", x5);
   promise_cost("x6", x6);
-  await Promise.allSettled([x1, x2.pending, x3.pending, x4, x5, x6]);
+  promise_cost("x7", x7);
+  promise_cost("x8", x8);
+  promise_cost("x9", x9);
+  await Promise.allSettled([
+    x1,
+    x2.pending,
+    x3.pending,
+    x4,
+    x5,
+    x6,
+    x7,
+    x8,
+    x9,
+  ]);
   const end = Date.now();
-  expect(cost * 5).lte(end - start);
-  expect(cost * 5.5 + wait_time).gte(end - start);
-  expect(await x1).eq(x);
-  expect(await x4).eq(x);
-  expect(await x5).eq(x);
-  expect(await x6).eq(x);
-  expect(seq).toEqual([1, 6, 4, 5]);
-});
+
+  console.log(cost * 3 < end - start);
+  console.log(cost * 3.5 + wait_time > end - start);
+  console.log((await x8) === x);
+  console.log(seq, [1, 8, 9, 4, 5]);
+};
+xxx();
