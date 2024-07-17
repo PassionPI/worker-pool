@@ -1,4 +1,4 @@
-import { concurrent, defer } from "@passion_pi/fp";
+import { concurrent, defer, IsValidPriority } from "@passion_pi/fp";
 import { create_worker, get_cpu_count } from "./effect";
 import { WorkerOption } from "./types";
 
@@ -58,8 +58,11 @@ export function worker_pool({
   >(
     fn: (...arg: P) => R,
     arg: P,
-    config?: Parameters<typeof control.add<R, N>>[1]
-  ) => {
+    config?: { priority?: IsValidPriority<N> }
+  ): {
+    pending: Promise<R>;
+    reject: (msg?: string) => void;
+  } => {
     let id: undefined | ID;
 
     const task = control.add(async () => {

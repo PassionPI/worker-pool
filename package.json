@@ -24,6 +24,9 @@
     "url": "https://github.com/PassionPI/worker-pool/issues"
   },
   "homepage": "https://github.com/PassionPI/worker-pool#readme",
+  "dependencies": {
+    "@passion_pi/fp": "^0.2.2"
+  },
   "devDependencies": {
     "@types/node": "^20.14.10",
     "@vitest/coverage-v8": "^2.0.1",
@@ -56,9 +59,6 @@
     "fp",
     "worker pool"
   ],
-  "dependencies": {
-    "@passion_pi/fp": "^0.2.0"
-  },
   "publishConfig": {
     "access": "public"
   }
