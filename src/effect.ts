@@ -7,15 +7,15 @@ const UNSUPPORTED_ENV = "Un Support Environment";
 //* 判断不同环境的函数
 export const is_deno = () => {
   //@ts-ignore
-  return typeof Deno !== "undefined" && Deno.version != null;
+  return typeof Deno != "undefined" && Deno.version;
 };
 export const is_node = () => {
   //@ts-ignore 环境判断函数
-  return typeof process !== "undefined" && process.versions != null;
+  return typeof process != "undefined" && process.versions;
 };
 export const is_browser = () => {
   //@ts-ignore 环境判断函数
-  return typeof window !== "undefined" && window.document != null;
+  return typeof window != "undefined" && window.document;
 };
 export const get_cpu_count = () => {
   if (is_deno() || is_browser()) {

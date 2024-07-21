@@ -1,7 +1,7 @@
 let { parentPort } = require("node:worker_threads");
 parentPort.on("message", (data) => {
-  let { payload: p } = data || {};
-  let { fn, arg } = p || {};
+  let { x } = data || {};
+  let { fn, arg } = x || {};
   let msg = (m) => m || "No Err Msg!";
   Promise.resolve(`return (${fn})(...arguments)`)
     .then(Function)
