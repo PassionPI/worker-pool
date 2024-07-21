@@ -5,23 +5,23 @@ import { WorkerOption } from "./types";
 type ID = number;
 
 const worker_handler = (config?: WorkerOption) => {
-  let x = defer<any>();
+  let loader = defer<any>();
 
-  const refresh = () => (x = defer());
+  const refresh = () => (loader = defer());
   const worker = create_worker(config);
 
   worker.addEventListener("message", (e) => {
     const [err, result] = e.data || [];
     if (err != null) {
-      x.reject(err);
+      loader.reject(err);
     } else {
-      x.resolve(result);
+      loader.resolve(result);
     }
     refresh();
   });
 
   worker.addEventListener("error", (e) => {
-    x.reject(e.error);
+    loader.reject(e.error);
     refresh();
   });
 
@@ -30,12 +30,12 @@ const worker_handler = (config?: WorkerOption) => {
     arg: P
   ): Promise<R> => {
     worker.postMessage({
-      payload: {
+      x: {
         fn: fn.toString(),
         arg,
       },
     });
-    return x.pending;
+    return loader.pending;
   };
 
   return { worker, run };
@@ -79,7 +79,7 @@ export function worker_pool({
           try {
             return await run(fn, arg);
           } finally {
-            idle.push(id);
+            id && idle.push(id);
           }
         } else {
           throw Error("Worker Not Found!");
@@ -88,6 +88,7 @@ export function worker_pool({
         throw Error("Worker ID Not Found!");
       }
     }, config);
+
     return {
       ...task,
       reject(msg: string = "") {
@@ -98,6 +99,7 @@ export function worker_pool({
             handler.worker.terminate();
             handler.worker.dispatchEvent(new Event("error"));
             pool.delete(id);
+            id = undefined;
           }
         }
       },

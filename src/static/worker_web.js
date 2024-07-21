@@ -1,6 +1,6 @@
 self.onmessage = (e) => {
-  let { payload: p } = e.data || {};
-  let { fn, arg } = p || {};
+  let { x } = e.data || {};
+  let { fn, arg } = x || {};
   let msg = (m) => m || "No Err Msg!";
   Promise.resolve(`return (${fn})(...arguments)`)
     .then(Function)
