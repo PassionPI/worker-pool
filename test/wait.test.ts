@@ -1,4 +1,4 @@
-import { worker_pool } from "@/index";
+import { workerPool } from "@/index";
 import { expect, test } from "vitest";
 
 const promise_cost = async (tag: string, promise: Promise<unknown>) => {
@@ -24,7 +24,7 @@ const cost = end - start;
 console.log("One worker cost", cost);
 test("wait time cost", async () => {
   const seq: number[] = [];
-  const p = worker_pool({ max: 2 });
+  const p = workerPool({ max: 2 });
   const x1 = p.exec(worker_fib, [fib_num]).pending.then((v) => {
     seq.push(1);
     return v;
