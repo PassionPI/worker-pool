@@ -1,4 +1,4 @@
-import { concurrent, defer, IsValidPriority } from "@passion_pi/fp";
+import { createSchedular, defer, IsValidPriority } from "@passion_pi/fp";
 import { create_worker, get_cpu_count } from "./effect";
 import { WorkerOption } from "./types";
 
@@ -41,11 +41,11 @@ const worker_handler = (config?: WorkerOption) => {
   return { worker, run };
 };
 
-export function worker_pool({
+export function workerPool({
   max = get_cpu_count(),
   workerOption,
 }: { max?: number; workerOption?: WorkerOption } = {}) {
-  const control = concurrent({ max_concurrency: max });
+  const schedular = createSchedular({ concurrent: max });
   const pool = new Map<ID, ReturnType<typeof worker_handler>>();
   const idle = Array<ID>();
 
@@ -58,14 +58,14 @@ export function worker_pool({
   >(
     fn: (...arg: P) => R,
     arg: P,
-    config?: { priority?: IsValidPriority<N> }
+    config?: { priority?: IsValidPriority<N>; tag?: string }
   ): {
     pending: Promise<R>;
     reject: (msg?: string) => void;
   } => {
     let id: undefined | ID;
 
-    const task = control.add(async () => {
+    const task = schedular.add(async () => {
       //* worker数量未达上限
       if (pool.size < max) {
         inc++;
@@ -111,11 +111,13 @@ export function worker_pool({
     idle.length = 0;
     pool.forEach(({ worker }) => worker.terminate());
     pool.clear();
-    control.clear();
+    schedular.clear();
   };
 
   return {
     exec,
     terminate,
+    idle: schedular.idle,
+    tasks: schedular.tasks,
   };
 }

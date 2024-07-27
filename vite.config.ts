@@ -10,7 +10,7 @@ export default mergeConfig(
     },
     build: {
       lib: {
-        name: "work_pool",
+        name: "workerPool",
         entry: "src/index.ts",
         formats: ["cjs", "es"],
         fileName: (format) =>
