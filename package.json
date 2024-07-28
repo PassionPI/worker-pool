@@ -1,10 +1,11 @@
 {
   "name": "@passion_pi/worker-pool",
-  "version": "0.2.5",
+  "version": "0.2.9",
+  "privet": false,
   "description": "",
   "type": "module",
   "scripts": {
-    "check": "tsc --noEmit --skipLibCheck",
+    "check": "tsc --noEmit",
     "build": "npm run build:check && npm run build:bundle && npm run build:type",
     "build:bundle": "vite build",
     "build:check": "npm run check",
@@ -24,11 +25,7 @@
     "url": "https://github.com/PassionPI/worker-pool/issues"
   },
   "homepage": "https://github.com/PassionPI/worker-pool#readme",
-  "dependencies": {
-    "@passion_pi/fp": "^0.2.4"
-  },
   "devDependencies": {
-    "@types/node": "^20.14.10",
     "@vitest/coverage-v8": "^2.0.1",
     "rambda": "^9",
     "rollup": "^4",
@@ -57,9 +54,13 @@
   "keywords": [
     "async",
     "fp",
-    "worker pool"
+    "functional",
+    "utility"
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@passion_pi/fp": "^0.2.8"
   }
 }
