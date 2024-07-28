@@ -1,6 +1,6 @@
 {
   "name": "@passion_pi/worker-pool",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "description": "",
   "type": "module",
   "scripts": {
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/PassionPI/worker-pool#readme",
   "dependencies": {
-    "@passion_pi/fp": "^0.2.4"
+    "@passion_pi/fp": "^0.2.6"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
