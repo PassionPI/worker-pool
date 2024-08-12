@@ -1,6 +1,6 @@
 {
   "name": "@passion_pi/worker-pool",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "privet": false,
   "description": "",
   "type": "module",
