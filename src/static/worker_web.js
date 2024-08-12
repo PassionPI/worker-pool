@@ -1,4 +1,4 @@
-self.onmessage = (e) => {
+globalThis.onmessage = (e) => {
   let { x } = e.data || {};
   let { fn, arg } = x || {};
   let msg = (m) => m || "No Err Msg!";
@@ -12,5 +12,5 @@ self.onmessage = (e) => {
         null,
       ]
     )
-    .then(self.postMessage);
+    .then(globalThis.postMessage);
 };
