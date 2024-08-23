@@ -19,7 +19,7 @@ export const is_browser = () => {
 };
 export const get_cpu_count = () => {
   if (is_deno() || is_browser()) {
-    return navigator.hardwareConcurrency;
+    return globalThis?.navigator?.hardwareConcurrency || 1;
   }
   // if (is_node()) {
   //   return require("os").cpus().length;
