@@ -1,6 +1,5 @@
 globalThis.onmessage = (e) => {
-  let { x } = e.data || {};
-  let { fn, arg } = x || {};
+  let { fn, arg } = e.data || {};
   let msg = (m) => m || "No Err Msg!";
   Promise.resolve(`return (${fn})(...arguments)`)
     .then(Function)

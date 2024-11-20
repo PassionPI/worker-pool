@@ -30,10 +30,8 @@ const worker_handler = (config?: WorkerOption) => {
     arg: P
   ): Promise<R> => {
     worker.postMessage({
-      x: {
-        fn: fn.toString(),
-        arg,
-      },
+      fn: fn.toString(),
+      arg,
     });
     return loader.pending;
   };
@@ -73,19 +71,17 @@ export function workerPool({
         pool.set(inc, worker_handler(workerOption));
       }
       id = idle.pop();
-      if (id != null) {
-        const { run } = pool.get(id) || {};
-        if (run) {
-          try {
-            return await run(fn, arg);
-          } finally {
-            id && idle.push(id);
-          }
-        } else {
-          throw Error("Worker Not Found!");
-        }
-      } else {
+      if (id == null) {
         throw Error("Worker ID Not Found!");
+      }
+      const { run } = pool.get(id) || {};
+      if (run == null) {
+        throw Error("Worker Not Found!");
+      }
+      try {
+        return await run(fn, arg);
+      } finally {
+        id && idle.push(id);
       }
     }, config);
 
@@ -93,15 +89,17 @@ export function workerPool({
       ...task,
       reject(msg: string = "") {
         task.reject(Error("Task handle Rejected!" + msg));
-        if (id != null) {
-          const handler = pool.get(id);
-          if (handler) {
-            handler.worker.terminate();
-            handler.worker.dispatchEvent(new Event("error"));
-            pool.delete(id);
-            id = undefined;
-          }
+        if (id == null) {
+          return;
         }
+        const handler = pool.get(id);
+        if (!handler) {
+          return;
+        }
+        handler.worker.terminate();
+        handler.worker.dispatchEvent(new Event("error"));
+        pool.delete(id);
+        id = undefined;
       },
     };
   };
